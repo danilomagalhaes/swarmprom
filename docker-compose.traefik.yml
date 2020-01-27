@@ -130,7 +130,6 @@ services:
         - traefik.http.routers.alertmanager.rule=Host(`alertmanager.${DOMAIN?Variable DOMAIN not set}`)
         # Traefik basic Auth
         - traefik.http.routers.alertmanager.middlewares=auth
-        - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}
 
   unsee:
     image: cloudflare/unsee:v0.8.0
@@ -151,9 +150,8 @@ services:
         - traefik.http.routers.unsee.tls.certresolver=letsencryptresolver
         - traefik.http.routers.unsee.rule=Host(`unsee.${DOMAIN?Variable DOMAIN not set}`)
         # Traefik basic Auth
-        - traefik.http.routers.alertmanager.middlewares=auth
-        - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}
-
+        - traefik.http.routers.unsee.middlewares=auth
+      
   node-exporter:
     image: stefanprodan/swarmprom-node-exporter:v0.16.0
     networks:
@@ -215,5 +213,4 @@ services:
         - traefik.http.routers.prometheus.tls.certresolver=letsencryptresolver
         - traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN?Variable DOMAIN not set}`)
         # Traefik basic Auth
-        - traefik.http.routers.alertmanager.middlewares=auth
-        - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}
+        - traefik.http.routers.prometheus.middlewares=auth
