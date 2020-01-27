@@ -129,8 +129,8 @@ services:
         - traefik.http.routers.alertmanager.tls.certresolver=letsencryptresolver
         - traefik.http.routers.alertmanager.rule=Host(`alertmanager.${DOMAIN?Variable DOMAIN not set}`)
         # Traefik basic Auth
-        - "traefik.http.routers.traefik.middlewares=auth"
-        - "traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}"
+        - traefik.http.routers.alertmanager.middlewares=auth
+        - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}
 
   unsee:
     image: cloudflare/unsee:v0.8.0
@@ -151,8 +151,8 @@ services:
         - traefik.http.routers.unsee.tls.certresolver=letsencryptresolver
         - traefik.http.routers.unsee.rule=Host(`unsee.${DOMAIN?Variable DOMAIN not set}`)
         # Traefik basic Auth
-        - "traefik.http.routers.traefik.middlewares=auth"
-        - "traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}"
+        - traefik.http.routers.alertmanager.middlewares=auth
+        - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}
 
   node-exporter:
     image: stefanprodan/swarmprom-node-exporter:v0.16.0
@@ -215,5 +215,5 @@ services:
         - traefik.http.routers.prometheus.tls.certresolver=letsencryptresolver
         - traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN?Variable DOMAIN not set}`)
         # Traefik basic Auth
-        - "traefik.http.routers.traefik.middlewares=auth"
-        - "traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}"
+        - traefik.http.routers.alertmanager.middlewares=auth
+        - traefik.http.middlewares.auth.basicauth.users=${USERNAME?Variable USERNAME not set}:${HASHED_PASSWORD?Variable HASHED_PASSWORD not set}
