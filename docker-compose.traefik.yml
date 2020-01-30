@@ -17,6 +17,8 @@ configs:
     file: ./prometheus/rules/swarm_node.rules.yml
   task_rules:
     file: ./prometheus/rules/swarm_task.rules.yml
+  traefik_rules:
+    file: ./prometheus/rules/swarm_traefik.rules.yml
 
 services:
   cadvisor:
@@ -177,6 +179,8 @@ services:
         target: /etc/prometheus/swarm_node.rules.yml
       - source: task_rules
         target: /etc/prometheus/swarm_task.rules.yml
+      - source: traefik_rules
+        target: /etc/prometheus/swarm_traefik.rules.yml
     deploy:
       mode: replicated
       replicas: 1
