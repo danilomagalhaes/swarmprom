@@ -39,7 +39,7 @@ services:
           memory: 64M
 
   grafana:
-    image: stefanprodan/swarmprom-grafana:5.3.4
+    image: daniloromao/swarmprom-grafana:5.3.4
     networks:
       - default
       - net
@@ -161,7 +161,7 @@ services:
           memory: 64M
 
   prometheus:
-    image: stefanprodan/swarmprom-prometheus:v2.5.0
+    image: daniloromao/swarmprom-prometheus:v2.5.0
     networks:
       - default
       - net
