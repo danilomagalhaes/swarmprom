@@ -138,7 +138,6 @@ services:
   node-exporter:
     image: stefanprodan/swarmprom-node-exporter:v0.16.0
     user: root
-    privileged: true
     networks:
       - net
     environment:
