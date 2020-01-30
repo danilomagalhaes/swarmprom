@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.3"
 
 networks:
   net:
@@ -138,6 +138,7 @@ services:
   node-exporter:
     image: stefanprodan/swarmprom-node-exporter:v0.16.0
     user: root
+    privileged: true
     networks:
       - net
     environment:
