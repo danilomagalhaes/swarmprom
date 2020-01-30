@@ -164,6 +164,7 @@ services:
 
   prometheus:
     image: daniloromao/swarmprom-prometheus:v2.15.2
+    networks:
       - default
       - net
       - traefik-public
