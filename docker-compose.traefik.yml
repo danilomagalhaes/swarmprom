@@ -39,7 +39,7 @@ services:
           memory: 64M
 
   grafana:
-    image: daniloromao/swarmprom-grafana:5.3.4
+    image: daniloromao/swarmprom-grafana:6.6.0
     networks:
       - default
       - net
