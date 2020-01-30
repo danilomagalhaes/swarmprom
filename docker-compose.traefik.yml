@@ -163,8 +163,7 @@ services:
           memory: 64M
 
   prometheus:
-    image: daniloromao/swarmprom-prometheus:v2.5.0
-    networks:
+    image: daniloromao/swarmprom-prometheus:v2.15.2
       - default
       - net
       - traefik-public
