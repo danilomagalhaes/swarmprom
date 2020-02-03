@@ -1,0 +1,106 @@
+version: "3.7"
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+volumes:
+    prometheus: {}
+
+configs:
+  node_rules:
+    file: ./prometheus/rules/swarm_node.rules.yml
+  task_rules:
+    file: ./prometheus/rules/swarm_task.rules.yml
+  traefik_rules:
+    file: ./prometheus/rules/swarm_traefik.rules.yml
+
+services:
+  cadvisor:
+    image: google/cadvisor
+    networks:
+      - net
+    command: -logtostderr -docker_only
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+      
+  node-exporter:
+    image: stefanprodan/swarmprom-node-exporter:v0.16.0
+    user: root
+    privileged: true
+    networks:
+      - net
+    environment:
+      - NODE_ID={{.Node.ID}}
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /etc/hostname:/etc/nodename
+    command:
+      - '--path.sysfs=/host/sys'
+      - '--path.procfs=/host/proc'
+      - '--collector.textfile.directory=/etc/node-exporter/'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--no-collector.ipvs'
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  prometheus:
+    image: daniloromao/swarmprom-prometheus:v2.15.2
+    networks:
+      - default
+      - net
+      - traefik-public
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention=${PROMETHEUS_RETENTION:-24h}'
+    volumes:
+      - prometheus:/prometheus
+    configs:
+      - source: node_rules
+        target: /etc/prometheus/swarm_node.rules.yml
+      - source: task_rules
+        target: /etc/prometheus/swarm_task.rules.yml
+      - source: traefik_rules
+        target: /etc/prometheus/swarm_traefik.rules.yml
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 128M
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.prometheus.loadbalancer.server.port=9090
+        - traefik.http.routers.prometheus.tls=true
+        - traefik.http.routers.prometheus.entrypoints=https
+        - traefik.http.routers.prometheus.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN?Variable DOMAIN not set}`)
+        # Traefik basic Auth
+        - traefik.http.routers.prometheus.middlewares=auth
