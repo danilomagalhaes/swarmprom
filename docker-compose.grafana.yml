@@ -1,0 +1,107 @@
+version: "3.7"
+
+networks:
+  net:
+    driver: overlay
+    attachable: true
+  traefik-public:
+    external: true
+
+volumes:
+    grafana: {}
+    alertmanager: {}
+
+services:
+  grafana:
+    image: daniloromao/swarmprom-grafana:6.6.0
+    networks:
+      - default
+      - net
+      - traefik-public
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      #- GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL:-localhost}
+      #- GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
+      #- GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@test.com}
+      #- GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME:-Grafana}
+      #- GF_SMTP_HOST=${GF_SMTP_HOST:-smtp:25}
+      #- GF_SMTP_USER=${GF_SMTP_USER}
+      #- GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+    volumes:
+      - grafana:/var/lib/grafana
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.grafana.tls=true
+        - traefik.http.routers.grafana.entrypoints=https
+        - traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN?Variable DOMAIN not set}`)
+        - traefik.http.routers.grafana.tls.certresolver=letsencryptresolver
+        - traefik.http.services.grafana.loadbalancer.server.port=3000
+
+  alertmanager:
+    image: stefanprodan/swarmprom-alertmanager:v0.14.0
+    networks:
+      - default
+      - net
+      - traefik-public
+    environment:
+      - SLACK_URL=${SLACK_URL:-https://hooks.slack.com/services/TOKEN}
+      - SLACK_CHANNEL=${SLACK_CHANNEL:-general}
+      - SLACK_USER=${SLACK_USER:-alertmanager}
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - alertmanager:/alertmanager
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.alertmanager.loadbalancer.server.port=9093
+        - traefik.http.routers.alertmanager.tls=true
+        - traefik.http.routers.alertmanager.entrypoints=https
+        - traefik.http.routers.alertmanager.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.alertmanager.rule=Host(`alertmanager.${DOMAIN?Variable DOMAIN not set}`)
+        # Traefik basic Auth
+
+  unsee:
+    image: cloudflare/unsee:v0.8.0
+    networks:
+      - default
+      - net
+      - traefik-public
+    environment:
+      - "ALERTMANAGER_URIS=default:http://alertmanager:9093"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.unsee.loadbalancer.server.port=8080
+        - traefik.http.routers.unsee.tls=true
+        - traefik.http.routers.unsee.entrypoints=https
+        - traefik.http.routers.unsee.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.unsee.rule=Host(`unsee.${DOMAIN?Variable DOMAIN not set}`)
+        # Traefik basic Auth
+        - traefik.http.routers.unsee.middlewares=auth
